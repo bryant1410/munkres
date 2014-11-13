@@ -6,35 +6,27 @@
 """
 Introduction
 ============
-
 The Munkres module provides an implementation of the Munkres algorithm
 (also called the Hungarian algorithm or the Kuhn-Munkres algorithm),
 useful for solving the Assignment Problem.
-
 Assignment Problem
 ==================
-
 Let *C* be an *n*\ x\ *n* matrix representing the costs of each of *n* workers
 to perform any of *n* jobs. The assignment problem is to assign jobs to
 workers in a way that minimizes the total cost. Since each worker can perform
 only one job and each job can be assigned to only one worker the assignments
 represent an independent set of the matrix *C*.
-
 One way to generate the optimal set is to create all permutations of
 the indexes necessary to traverse the matrix so that no row and column
 are used more than once. For instance, given this matrix (expressed in
 Python)::
-
     matrix = [[5, 9, 1],
               [10, 3, 2],
               [8, 7, 4]]
-
 You could use this code to generate the traversal indexes::
-
     def permute(a, results):
         if len(a) == 1:
             results.insert(len(results), a)
-
         else:
             for i in range(0, len(a)):
                 element = a[i]
@@ -44,22 +36,17 @@ You could use this code to generate the traversal indexes::
                 for subresult in subresults:
                     result = [element] + subresult
                     results.insert(len(results), result)
-
     results = []
     permute(range(len(matrix)), results) # [0, 1, 2] for a 3x3 matrix
-
 After the call to permute(), the results matrix would look like this::
-
     [[0, 1, 2],
      [0, 2, 1],
      [1, 0, 2],
      [1, 2, 0],
      [2, 0, 1],
      [2, 1, 0]]
-
 You could then use that index matrix to loop over the original cost matrix
 and calculate the smallest cost of the combinations::
-
     n = len(matrix)
     minval = sys.maxsize
     for row in range(n):
@@ -67,9 +54,7 @@ and calculate the smallest cost of the combinations::
         for col in range(n):
             cost += matrix[row][col]
         minval = min(cost, minval)
-
     print minval
-
 While this approach works fine for small matrices, it does not scale. It
 executes in O(*n*!) time: Calculating the permutations for an *n*\ x\ *n*
 matrix requires *n*! operations. For a 12x12 matrix, that's 479,001,600
@@ -77,31 +62,21 @@ traversals. Even if you could manage to perform each traversal in just one
 millisecond, it would still take more than 133 hours to perform the entire
 traversal. A 20x20 matrix would take 2,432,902,008,176,640,000 operations. At
 an optimistic millisecond per operation, that's more than 77 million years.
-
 The Munkres algorithm runs in O(*n*\ ^3) time, rather than O(*n*!). This
 package provides an implementation of that algorithm.
-
 This version is based on
 http://www.public.iastate.edu/~ddoty/HungarianAlgorithm.html.
-
 This version was written for Python by Brian Clapper from the (Ada) algorithm
 at the above web site. (The ``Algorithm::Munkres`` Perl version, in CPAN, was
 clearly adapted from the same web site.)
-
 Usage
 =====
-
 Construct a Munkres object::
-
     from munkres import Munkres
-
     m = Munkres()
-
 Then use it to compute the lowest cost assignment from a cost matrix. Here's
 a sample program::
-
     from munkres import Munkres, print_matrix
-
     matrix = [[5, 9, 1],
               [10, 3, 2],
               [8, 7, 4]]
@@ -114,9 +89,7 @@ a sample program::
         total += value
         print '(%d, %d) -> %d' % (row, column, value)
     print 'total cost: %d' % total
-
 Running that program produces::
-
     Lowest cost through this matrix:
     [5, 9, 1]
     [10, 3, 2]
@@ -125,37 +98,28 @@ Running that program produces::
     (1, 1) -> 3
     (2, 2) -> 4
     total cost=12
-
 The instantiated Munkres object can be used multiple times on different
 matrices.
-
 Non-square Cost Matrices
 ========================
-
 The Munkres algorithm assumes that the cost matrix is square. However, it's
 possible to use a rectangular matrix if you first pad it with 0 values to make
 it square. This module automatically pads rectangular cost matrices to make
 them square.
-
 Notes:
-
 - The module operates on a *copy* of the caller's matrix, so any padding will
   not be seen by the caller.
 - The cost matrix must be rectangular or square. An irregular matrix will
   *not* work.
-
 Calculating Profit, Rather than Cost
 ====================================
-
 The cost matrix is just that: A cost matrix. The Munkres algorithm finds
 the combination of elements (one from each row and column) that results in
 the smallest cost. It's also possible to use the algorithm to maximize
 profit. To do that, however, you have to convert your profit matrix to a
 cost matrix. The simplest way to do that is to subtract all elements from a
 large value. For example::
-
     from munkres import Munkres, print_matrix
-
     matrix = [[5, 9, 1],
               [10, 3, 2],
               [8, 7, 4]]
@@ -165,7 +129,6 @@ large value. For example::
         for col in row:
             cost_row += [sys.maxsize - col]
         cost_matrix += [cost_row]
-
     m = Munkres()
     indexes = m.compute(cost_matrix)
     print_matrix(matrix, msg='Highest profit through this matrix:')
@@ -174,11 +137,8 @@ large value. For example::
         value = matrix[row][column]
         total += value
         print '(%d, %d) -> %d' % (row, column, value)
-
     print 'total profit=%d' % total
-
 Running that program produces::
-
     Highest profit through this matrix:
     [5, 9, 1]
     [10, 3, 2]
@@ -187,22 +147,16 @@ Running that program produces::
     (1, 0) -> 10
     (2, 2) -> 4
     total profit=23
-
 The ``munkres`` module provides a convenience method for creating a cost
 matrix from a profit matrix. Since it doesn't know whether the matrix contains
 floating point numbers, decimals, or integers, you have to provide the
 conversion function; but the convenience method takes care of the actual
 creation of the cost matrix::
-
     import munkres
-
     cost_matrix = munkres.make_cost_matrix(matrix,
                                            lambda cost: sys.maxsize - cost)
-
 So, the above profit-calculation program can be recast as::
-
     from munkres import Munkres, print_matrix, make_cost_matrix
-
     matrix = [[5, 9, 1],
               [10, 3, 2],
               [8, 7, 4]]
@@ -216,47 +170,33 @@ So, the above profit-calculation program can be recast as::
         total += value
         print '(%d, %d) -> %d' % (row, column, value)
     print 'total profit=%d' % total
-
 References
 ==========
-
 1. http://www.public.iastate.edu/~ddoty/HungarianAlgorithm.html
-
 2. Harold W. Kuhn. The Hungarian Method for the assignment problem.
    *Naval Research Logistics Quarterly*, 2:83-97, 1955.
-
 3. Harold W. Kuhn. Variants of the Hungarian method for assignment
    problems. *Naval Research Logistics Quarterly*, 3: 253-258, 1956.
-
 4. Munkres, J. Algorithms for the Assignment and Transportation Problems.
    *Journal of the Society of Industrial and Applied Mathematics*,
    5(1):32-38, March, 1957.
-
 5. http://en.wikipedia.org/wiki/Hungarian_algorithm
-
 Copyright and License
 =====================
-
 This software is released under a BSD license, adapted from
 <http://opensource.org/licenses/bsd-license.php>
-
 Copyright (c) 2008 Brian M. Clapper
 All rights reserved.
-
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
-
 * Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
-
 * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
-
 * Neither the name "clapper.org" nor the names of its contributors may be
   used to endorse or promote products derived from this software without
   specific prior written permission.
-
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -320,7 +260,6 @@ class Munkres:
     def make_cost_matrix(profit_matrix, inversion_function):
         """
         **DEPRECATED**
-
         Please use the module function ``make_cost_matrix()``.
         """
         import munkres
@@ -331,14 +270,11 @@ class Munkres:
     def pad_matrix(self, matrix, pad_value=0):
         """
         Pad a possibly non-square matrix to make it square.
-
         :Parameters:
             matrix : list of lists
                 matrix to pad
-
             pad_value : int
                 value to use to pad the matrix
-
         :rtype: list of lists
         :return: a new, possibly padded, matrix
         """
@@ -369,21 +305,17 @@ class Munkres:
         Compute the indexes for the lowest-cost pairings between rows and
         columns in the database. Returns a list of (row, column) tuples
         that can be used to traverse the matrix.
-
         :Parameters:
             cost_matrix : list of lists
                 The cost matrix. If this cost matrix is not square, it
                 will be padded with zeros, via a call to ``pad_matrix()``.
                 (This method does *not* modify the caller's matrix. It
                 operates on a copy of the matrix.)
-
                 **WARNING**: This code handles square and rectangular
                 matrices. It does *not* handle irregular matrices.
-
         :rtype: list
         :return: A list of ``(row, column)`` tuples that describe the lowest
                  cost path through the matrix
-
         """
         self.C = self.pad_matrix(cost_matrix)
         self.n = len(self.C)
@@ -415,12 +347,24 @@ class Munkres:
 
         # Look for the starred columns
         results = []
-        for i in range(self.original_length):
-            for j in range(self.original_width):
-                if self.marked[i][j] == 1:
-                    results += [(i, j)]
+        #for i in range(self.original_length):
+        #    for j in range(self.original_width):
+        #        if self.marked[i][j] == 1:
+        #            results += [(i, j)]
+
+        self.__backtracking(0, [], set(), results)
 
         return results
+
+    def __backtracking(self, i, current_result, cols_used, results):
+    	if i == self.original_length:
+    		results.append(copy.copy(current_result))
+    	else:
+    		for j in range(self.original_width):
+    			if j not in cols_used and self.C[i][j] == 0:
+    				cols_used.add(j)
+    				self.__backtracking(i+1, current_result + [(i, j)], cols_used, results)
+    				cols_used.remove(j)
 
     def __copy_matrix(self, matrix):
         """Return an exact copy of the supplied matrix"""
@@ -680,26 +624,17 @@ def make_cost_matrix(profit_matrix, inversion_function):
     function must take one numeric argument (of any type) and return
     another numeric argument which is presumed to be the cost inverse
     of the original profit.
-
     This is a static method. Call it like this:
-
     .. python::
-
         cost_matrix = Munkres.make_cost_matrix(matrix, inversion_func)
-
     For example:
-
     .. python::
-
         cost_matrix = Munkres.make_cost_matrix(matrix, lambda x : sys.maxsize - x)
-
     :Parameters:
         profit_matrix : list of lists
             The matrix to convert from a profit to a cost matrix
-
         inversion_function : function
             The function to use to invert each entry in the profit matrix
-
     :rtype: list of lists
     :return: The converted matrix
     """
@@ -711,11 +646,9 @@ def make_cost_matrix(profit_matrix, inversion_function):
 def print_matrix(matrix, msg=None):
     """
     Convenience function: Displays the contents of a matrix of integers.
-
     :Parameters:
         matrix : list of lists
             Matrix to print
-
         msg : str
             Optional message to print before displaying the matrix
     """
@@ -776,11 +709,13 @@ if __name__ == '__main__':
     m = Munkres()
     for cost_matrix, expected_total in matrices:
         print_matrix(cost_matrix, msg='cost matrix')
-        indexes = m.compute(cost_matrix)
-        total_cost = 0
-        for r, c in indexes:
-            x = cost_matrix[r][c]
-            total_cost += x
-            print('(%d, %d) -> %d' % (r, c, x))
-        print('lowest cost=%d' % total_cost)
-        assert expected_total == total_cost
+        indexess = m.compute(cost_matrix)
+        print('%d solution(s)' % (len(indexess),))
+        for indexes in indexess:
+	        total_cost = 0
+	        for r, c in indexes:
+	            x = cost_matrix[r][c]
+	            total_cost += x
+	            print('(%d, %d) -> %d' % (r, c, x))
+	        print('lowest cost=%d' % total_cost)
+	        assert expected_total == total_cost
