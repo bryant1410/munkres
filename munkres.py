@@ -352,19 +352,34 @@ class Munkres:
         #        if self.marked[i][j] == 1:
         #            results += [(i, j)]
 
+        #for i in range(self.original_length):
+        #    for j in range(self.original_width):
+        #        sys.stdout.write(str(self.C[i][j]) + " ")
+        #    print " "
+        
         self.__backtracking(0, [], set(), results)
 
         return results
 
     def __backtracking(self, i, current_result, cols_used, results):
-    	if i == self.original_length:
-    		results.append(copy.copy(current_result))
-    	else:
-    		for j in range(self.original_width):
-    			if j not in cols_used and self.C[i][j] == 0:
-    				cols_used.add(j)
-    				self.__backtracking(i+1, current_result + [(i, j)], cols_used, results)
-    				cols_used.remove(j)
+        if i == self.original_length:
+            # If I don't check this, if cost matrix had been converted from profit matrix
+            # and the assignment problem if from 0,1 to 0,1 cardinality, it could happen
+            # that a solution with less assigned rows seems to be better than other
+            # with more assignations, provided the cost is lower because of suming
+            # less times sys.maxvalue (or whatever) than the latter.
+            if len(cols_used) == self.original_width:
+                results.append(copy.copy(current_result))
+        else:
+            exists_zero_in_row = False
+            for j in range(self.original_width):
+                if j not in cols_used and self.C[i][j] == 0:
+                    exists_zero_in_row = True
+                    cols_used.add(j)
+                    self.__backtracking(i+1, current_result + [(i, j)], cols_used, results)
+                    cols_used.remove(j)
+            if not exists_zero_in_row:
+                self.__backtracking(i+1, current_result, cols_used, results)
 
     def __copy_matrix(self, matrix):
         """Return an exact copy of the supplied matrix"""
